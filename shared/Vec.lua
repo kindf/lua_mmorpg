@@ -6,7 +6,7 @@ local Vec = Class("Vec")
 
 local PI = math.pi
 
-function Vec._init(x, z)
+function Vec:_init(x, z)
     self.m_fX = x or 0.0
     self.m_fZ = z or 0.0
 end
