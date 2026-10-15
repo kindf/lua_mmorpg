@@ -1,6 +1,7 @@
 local Log = require("Tool.Log")
 local Data = require("Config.GameData")
 local C = require("Define.Constants")
+local SkillHelper = require("Skill.SkillHelper")
 
 local CGCharUseSkillHandler = {}
 CGCharUseSkillHandler.ThreadID = 1
@@ -48,8 +49,8 @@ function CGCharUseSkillHandler.Execute(pPacket, pPlayer)
 
     local pTarget = pScene:GetObjManager():GetObj(idTarget)
     if pTarget then
-        local pSkillTemplate = Data.g_SkillTemplateDataMgr:GetInstanceByID(idSkill)
-        local skillType = pSkillTemplate and pSkillTemplate:GetStandFlag() or 0
+        local pSkillTemplate = SkillHelper.GetSkillTemplate(idSkill)
+        local skillType = pSkillTemplate and pSkillTemplate.stand_flag or 0
         if skillType > 0 then
             if pHuman:IsEnemy(pTarget) then
                 Log.error(string.format("%s 与 %s 阵营不同 正面技能被拦截", pHuman:GetName(), pTarget:GetName()))

@@ -4,6 +4,7 @@ local AI_Character = require("AI.AICharacter")
 local Log = require("Tool.Log")
 local Vec = require("Tool.Vec")
 local ActionDelegator = require("Action.ActionDelegator")
+local SkillHelper = require("Skill.SkillHelper")
 
 ---@class UseSkillParam
 local UseSkillParam = Class("UseSkillParam")
@@ -57,7 +58,7 @@ function AI_Human:IsEnterCombatState(idSkill, nLevel, idTarget)
         return false
     end
 
-    local pSkill = Data.g_SkillTemplateDataMgr:GetInstanceByID(idSkill)
+    local pSkill = SkillHelper.GetSkillTemplate(idSkill)
     if not pSkill then
         return false
     end
@@ -65,7 +66,7 @@ function AI_Human:IsEnterCombatState(idSkill, nLevel, idTarget)
         pCharacter:SetLockedTarget(idTarget)
     end
 
-    if pSkill:IsAutoShotSkill() and pCharacter:GetObjType() == C.OBJ_TYPE.HUMAN then
+    if pSkill.is_auto_shot_skill and pCharacter:GetObjType() == C.OBJ_TYPE.HUMAN then
         self.m_paramAI_UseSkill.m_nAutoShotSkill = idSkill
         self.m_paramAI_UseSkill.m_nSkillLevel = nLevel
         self.m_paramAI_UseSkill.m_nAutoShotTargetObjID = idTarget
@@ -99,7 +100,7 @@ end
 
 function AI_Human:PushSkillToQueue(idSkill, nLevel, idTarget, fTargetX, fTargetZ, fDir, guidTarget)
     Log.fn("AI_Hunam::PushSkillToQueue", string.format("skill=%s", idSkill))
-    local pSkill = Data.g_SkillTemplateDataMgr:GetInstanceByID(idSkill)
+    local pSkill = SkillHelper.GetSkillTemplate(idSkill)
     if pSkill == nil then
         Log.back(nil)
         return
@@ -116,7 +117,7 @@ function AI_Human:PushSkillToQueue(idSkill, nLevel, idTarget, fTargetX, fTargetZ
             end
         end
 
-        if pSkill:CanInterruptAutoShot() then
+        if pSkill.can_interrupt_auto_shot ~= 0 then
             self.m_paramAI_UseSkill.m_nAutoShotSkill = C.INVALID_SKILL_ID
             self.m_paramAI_UseSkill.m_nAutoShotTargetObjID = C.INVALID_ID
         end
@@ -135,33 +136,22 @@ function AI_Human:PushSkillToQueue(idSkill, nLevel, idTarget, fTargetX, fTargetZ
 end
 
 function AI_Human:GetSkillInstanceByLevel(nSkillID, nLevel)
-    local tmpl = Data.g_SkillTemplateDataMgr:GetInstanceByID(nSkillID)
-    if tmpl == nil then
-        return nil
-    end
-    if nLevel == nil or nLevel == 0 then
-        nLevel = 1
-    end
-    local instId = tmpl:GetSkillInstance(nLevel - 1)
-    if instId == nil then
-        return nil
-    end
-    return Data.g_SkillInstanceDataMgr:GetInstanceByID(instId)
+    return SkillHelper.GetSkillInstance(nSkillID, nLevel)
 end
 
 -- 检查目标是否有效（技能选择类型为 CHARACTER 时才会检查）
 function AI_Human:CheckTargetValid(nSkillID, TargetID, nLevel)
-    local tmpl = Data.g_SkillTemplateDataMgr:GetInstanceByID(nSkillID)
+    local tmpl = SkillHelper.GetSkillTemplate(nSkillID)
     if tmpl == nil then
         return false
     end
 
     -- 读实例数据，与 SkillCore 的校验来源保持一致（select_type 优先取实例，缺省回退模板）
     local inst = self:GetSkillInstanceByLevel(nSkillID, nLevel)
-    local selectType = (inst and inst.select_type) or tmpl:GetSelectType()
+    local selectType = (inst and inst.select_type) or tmpl.select_type
     local nState = inst and inst.target_must_in_special_state
     if nState == nil then
-        nState = tmpl:GetTargetMustInSpecialState()
+        nState = tmpl.target_must_in_special_state
     end
 
     if selectType == C.SELECT_TYPE.CHARACTER then

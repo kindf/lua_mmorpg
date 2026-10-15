@@ -4,6 +4,7 @@ local Data = require("Config.GameData")
 local ActionDelegator = require("Action.ActionDelegator")
 local Class = require("Tool.Class")
 local SkillLogicMgr = require("Skill.SkillLogic.SkillLogicMgr")
+local SkillHelper = require("Skill.SkillHelper")
 
 ---@class SkillCore
 local SkillCore = Class("SkillCore")
@@ -24,7 +25,7 @@ function SkillCore:ProcessSkillRequest(rMe, nSkillID, nLevel, nTargetID, rTarget
     Log.fn("SkillCore:ProcessSkillRequest", string.format("skill=%s lv=%s target=%s pos=%s dir=%s guid=%s", nSkillID, nLevel, nTargetID, rTargetPos, fTargetDir, guidTarget))
 
     local params = rMe:GetTargetAndDepletingParams()
-    local tmpl = Data.g_SkillTemplateDataMgr:GetInstanceByID(nSkillID)
+    local tmpl = SkillHelper.GetSkillTemplate(nSkillID)
 
     if tmpl == nil then
         params:SetErrCode(C.OR_INVALID_SKILL)
@@ -53,7 +54,7 @@ function SkillCore:ProcessSkillRequest(rMe, nSkillID, nLevel, nTargetID, rTarget
         return false
     end
 
-    if rMe:GetObjType() == C.OBJ_TYPE.HUMAN and tmpl:GetClassByUser() == C.CLASS_BY_USER_PLAYER then
+    if rMe:GetObjType() == C.OBJ_TYPE.HUMAN and tmpl.class_by_user == C.CLASS_BY_USER_PLAYER then
         if (not rMe:Skill_HaveSkill(nSkillID, nLevel)) and (not params:GetIgnoreConditionCheckFlag()) then
             params:SetErrCode(C.OR_INVALID_SKILL)
             Log.error("角色不会这个技能 -> OR_INVALID_SKILL")
@@ -81,8 +82,7 @@ function SkillCore:ProcessSkillRequest(rMe, nSkillID, nLevel, nTargetID, rTarget
     end
 
     if rMe:GetObjType() == C.OBJ_TYPE.HUMAN then
-        local instId = tmpl:GetSkillInstance(nLevel - 1)
-        local inst = Data.g_SkillInstanceDataMgr:GetInstanceByID(instId)
+        local inst = SkillHelper.GetSkillInstance(nSkillID, nLevel)
         if inst == nil then
             params:SetErrCode(C.OR_INVALID_SKILL)
             Log.back(false)
@@ -115,7 +115,7 @@ end
 function SkillCore:InstanceSkill(rSkillInfoOut, rMe, nSkill, nLevel)
     Log.fn("SkillCore:InstanceSkill", string.format("skill=%s lv=%s", nSkill, nLevel))
     local params = rMe:GetTargetAndDepletingParams()
-    local tmpl = Data.g_SkillTemplateDataMgr:GetInstanceByID(nSkill)
+    local tmpl = SkillHelper.GetSkillTemplate(nSkill)
     if tmpl == nil then
         Log.error("模板不存在 -> OR_INVALID_SKILL")
         Log.back(false)
@@ -127,8 +127,7 @@ function SkillCore:InstanceSkill(rSkillInfoOut, rMe, nSkill, nLevel)
     end
 
     params:SetSkillLevel(nLevel)
-    local instId = tmpl:GetSkillInstance(nLevel - 1)
-    local inst = Data.g_SkillInstanceDataMgr:GetInstanceByID(instId)
+    local inst = SkillHelper.GetSkillInstance(nSkill, nLevel)
     if inst == nil then
         Log.error("实例不存在 -> OR_INVALID_SKILL")
         Log.back(false)

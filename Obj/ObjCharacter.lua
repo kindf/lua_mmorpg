@@ -8,6 +8,10 @@ local Vec = require("Tool.Vec")
 local AOI = require("Scene.AOI")
 local TargetAndDepletingParams = require("Obj.ObjParam.TargetAndDepletingParam")
 local MoveParam = require("Obj.ObjParam.MoveParam")
+local SkillParam = require("Obj.ObjParam.SkillParam")
+local SkillHelper = require("Skill.SkillHelper")
+local Protocol = require("Network.Protocol")
+local SS = Protocol.SMSG
 
 ---@class ObjCharacter
 local ObjCharacter = Class("ObjCharacter")
@@ -47,7 +51,7 @@ function ObjCharacter:_init(cfg)
     self.cooldowns = {}
     self.auto_repeat_ready = 0
 
-    self.skill_info = Data.SkillInfo.new()
+    self.skill_info = SkillParam.new()
     self.params = TargetAndDepletingParams.new()
 
     ----------------------------------------------------------------------------
@@ -152,16 +156,15 @@ function ObjCharacter:Skill_CanUseThisSkillInThisStatus(skillID)
 end
 
 function ObjCharacter:Skill_IsSkillCooldowned(skillID)
-    local tmpl = Data.g_SkillTemplateDataMgr:GetInstanceByID(skillID)
+    local tmpl = SkillHelper.GetSkillTemplate(skillID)
     if tmpl == nil then
         return true
     end
 
-    if tmpl:IsAutoShotSkill() then
+    if tmpl.is_auto_shot_skill then
         return ActionDelegator.GetInstance():Now() > self.auto_repeat_ready
     end
-    local instId = tmpl:GetSkillInstance(0)
-    local inst = Data.g_SkillInstanceDataMgr:GetInstanceByID(instId)
+    local inst = SkillHelper.GetSkillInstance(skillID, 1)
     if inst == nil then
         return true
     end
