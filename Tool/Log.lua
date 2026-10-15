@@ -1,4 +1,3 @@
-
 local Log = {}
 Log.depth = 0
 Log.enabled = true

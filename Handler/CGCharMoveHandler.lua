@@ -1,6 +1,6 @@
-local Log = require("shared.Log")
-local C = require("shared.Constants")
-local Protocol = require("network.Protocol")
+local Log = require("Tool.Log")
+local C = require("Define.Constants")
+local Protocol = require("Network.Protocol")
 
 local CCGCharMoveHandler = {}
 CCGCharMoveHandler.ThreadID = 1

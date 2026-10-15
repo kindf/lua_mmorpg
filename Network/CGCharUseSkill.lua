@@ -1,8 +1,8 @@
-local C = require("shared.constants")
-local Log = require("shared.log")
-local Data = require("data.game_data")
-local Protocol = require("ch1_network.protocol")
-local Class = require("shared.class")
+local C = require("Tool.Constants")
+local Log = require("Tool.Log")
+local Data = require("Config.GameData")
+local Protocol = require("Network.Protocol")
+local Class = require("Tool.Class")
 
 ---@class CGCharUseSkill
 local CGCharUseSkill = Class("CGCharUseSkill")

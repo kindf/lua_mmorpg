@@ -1,6 +1,6 @@
-local Log = require("shared.log")
-local Data = require("data.game_data")
-local C = require("shared.constants")
+local Log = require("Tool.Log")
+local Data = require("Config.GameData")
+local C = require("Define.Constants")
 
 local CGCharUseSkillHandler = {}
 CGCharUseSkillHandler.ThreadID = 1

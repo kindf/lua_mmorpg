@@ -1,5 +1,5 @@
-local Class = require("shared.Class")
-local C = require("shared.Constants")
+local Class = require("Tool.Class")
+local C = require("Define.Constants")
 
 ---@class CGCharMove
 local CGCharMove = Class("CGCharMove")
