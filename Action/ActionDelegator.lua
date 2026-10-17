@@ -9,7 +9,6 @@ local ActionLogicMgr = require("Action.ActionLogic.ActionLogicMgr")
 local ActionDelegator = Class("ActionDelegator")
 
 function ActionDelegator:_init()
-    self._actions = {}
     self._now = 0
 end
 
@@ -17,15 +16,17 @@ function ActionDelegator:Now()
     return self._now
 end
 
-function ActionDelegator:CanDoNextAction(character)
-    local a = self._actions[character:GetID()]
-    if a == nil then
+---@param rActor ObjCharacter
+function ActionDelegator:CanDoNextAction(rActor)
+    local actionLogic = rActor:GetActionLogic()
+    local actionParam = rActor:GetActionParam()
+    if not actionLogic then
         return true
     end
-    if self._now >= a.end_time then
-        self._actions[character:GetID()] = nil
+    if 0 >= actionParam:GetContinuance() then
         return true
     end
+
     return false
 end
 
@@ -50,19 +51,6 @@ end
 
 -- 广播动作
 function ActionDelegator:BroadcastUnitStartInstantAction(rActor, nAction, nActionTime)
-end
-
--- 注册蓄力技能action
-function ActionDelegator:__RegisterChargeActionForSkill(rMe, skillID, maxTime, on_done)
-    Log.fn("ActionDelegator::RegisterChargeActionForSkill", string.format("%s skill=%s", rMe.name, skillID))
-    self._actions[rMe:GetID()] = {
-        kind = "charge",
-        skill_id = skillID,
-        end_time = maxTime + self._now,
-        on_done = on_done
-    }
-    Log.back(true)
-    return true
 end
 
 ---@param rActor ObjCharacter
@@ -121,27 +109,6 @@ end
 function ActionDelegator:BroadcastUnitStartChannelAction(rActor, nAction, nActionTime)
 end
 
-function ActionDelegator:Tick(uTime)
-    self._now = uTime
-    for id, a in pairs(self._actions) do
-        if a.kind == "charge" and uTime >= a.end_time then
-            self._actions[id] = nil
-            if a.on_done then
-                a.on_done()
-            end
-        elseif a.kind == "channel" then
-            if uTime >= a.end_time then
-                self._actions[id] = nil
-            elseif a.on_tick and uTime >= a.next_tick then
-                a.next_tick = a.next_tick + a.interval
-                if a.on_tick() == false then
-                    self._actions[id] = nil
-                end
-            end
-        end
-    end
-end
-
 ---@param rActor ObjCharacter
 function ActionDelegator:OnHeartBeat(rActor, deltaTime)
     local bRet = false
@@ -176,14 +143,14 @@ end
 
 function ActionDelegator:InterruptCurrentAction(rActor)
     local actionLogic = rActor.GetActionLogic()
-    local rActionParams = rActor.GetActionParams()
+    local rActionParam = rActor.GetActionParam()
     if actionLogic then
-        actionLogic:OnInterrupt(rActionParams)
+        actionLogic:OnInterrupt(rActionParam)
     end
     if(rActor:GetCharacterLogic()==C.CHARACTER_LOGIC.USE_SKILL) then
         rActor:StopCharacterLogic(true)
     end
-    rActor:ResetForNextAction()
+    self:ResetForNextAction()
 end
 
 function ActionDelegator:ResetForNextAction(rActor)
@@ -193,7 +160,7 @@ function ActionDelegator:ResetForNextAction(rActor)
         pCallBack:ResetForNextAction(rActionParam)
     end
     rActionParam:Reset()
-    rActionParam:SetActionLogic(nil)
+    rActor:SetActionLogic(nil)
 end
 
 ---@type ActionDelegator

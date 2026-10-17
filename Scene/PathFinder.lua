@@ -93,21 +93,6 @@ function PathFinder:IsCanGo(pos, nLevel)
     return false
 end
 
-function PathFinder:_f(zx) return self.mF[zx] or 1e12 end
-
-function PathFinder:_heapPush(zx)
-    local h = self.mHeap
-    local n = self.mHeapSize + 1
-    self.mHeapSize = n
-    h[n] = zx
-    while n > 1 do
-        local p = math.floor(n / 2)
-        if self:_f(h[p]) <= self:_f(h[n]) then break end
-        h[p], h[n] = h[n], h[p]
-        n = p
-    end
-end
-
 --------------------------------------------------------------------------------
 -- A* 用的二叉堆(最大堆)
 --------------------------------------------------------------------------------

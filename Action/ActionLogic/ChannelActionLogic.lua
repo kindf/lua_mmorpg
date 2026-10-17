@@ -1,15 +1,15 @@
 local Class = require("Tool.Class")
-local ActionLogic = require("Action.ActionLogic")
+local ActionLogic = require("Action.ActionLogic.ActionLogic")
 
 ---@class ChannelActionLogic : ActionLogic
 local ChannelActionLogic = Class("ChannelActionLogic", ActionLogic)
 
 function ChannelActionLogic:_init(id)
-    self.__base:_init(self, id)
+    self.__base._init(self, id)
 end
 
 function ChannelActionLogic:HeartBeat(actionParam, deltaTime)
-    local pCallBack = actionParam.GetCallBackFunctor()
+    local pCallBack = actionParam:GetCallBackFunctor()
 
     if pCallBack==nil then
         return false
@@ -19,9 +19,9 @@ function ChannelActionLogic:HeartBeat(actionParam, deltaTime)
         return false
     end
 
-    local nIntervalElapsed = actionParam.GetIntervalElapsed()
-    local nContinuance = actionParam.GetContinuance()
-    local nInterval = actionParam.GetInterval()
+    local nIntervalElapsed = actionParam:GetIntervalElapsed()
+    local nContinuance = actionParam:GetContinuance()
+    local nInterval = actionParam:GetInterval()
     local bRet = true
 
     if 500 > nInterval then
@@ -39,7 +39,7 @@ function ChannelActionLogic:HeartBeat(actionParam, deltaTime)
         nContinuance = 0
     end
 
-    actionParam.SetContinuance(nContinuance)
+    actionParam:SetContinuance(nContinuance)
     
     while nIntervalElapsed >= nInterval do
         nIntervalElapsed = nIntervalElapsed - nInterval
@@ -48,12 +48,12 @@ function ChannelActionLogic:HeartBeat(actionParam, deltaTime)
             break
         end
     end
-    actionParam.SetIntervalElapsed(nIntervalElapsed)
+    actionParam:SetIntervalElapsed(nIntervalElapsed)
     return bRet
 end
 
 function ChannelActionLogic:OnDisturb(actionParam)
-    local pCallBack = actionParam.GetCallBackFunctor()
+    local pCallBack = actionParam:GetCallBackFunctor()
     if pCallBack ~= nil then
         return pCallBack:OnDisturbForChanneling(actionParam)
     end
@@ -61,7 +61,7 @@ function ChannelActionLogic:OnDisturb(actionParam)
 end
 
 function ChannelActionLogic:OnInterrupt(actionParam)
-    local pCallBack = actionParam.GetCallBackFunctor()
+    local pCallBack = actionParam:GetCallBackFunctor()
     if pCallBack ~= nil then
         return pCallBack:OnInterrupt(actionParam)
     end

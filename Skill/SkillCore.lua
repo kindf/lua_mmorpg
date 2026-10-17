@@ -26,17 +26,17 @@ function SkillCore:ProcessSkillRequest(rMe, nSkillID, nLevel, nTargetID, rTarget
     local params = rMe:GetTargetAndDepletingParams()
     local tmpl = SkillHelper.GetSkillTemplate(nSkillID)
 
+    if nSkillID == C.INVALID_ID then
+        params:SetErrCode(C.OR_OK)
+        Log.back(true)
+        return true
+    end
+
     if tmpl == nil then
         params:SetErrCode(C.OR_INVALID_SKILL)
         Log.error("模板不存在 -> OR_INVALID_SKILL")
         Log.back(false)
         return false
-    end
-
-    if nSkillID == C.INVALID_ID then
-        params:SetErrCode(C.OR_OK)
-        Log.back(true)
-        return true
     end
 
     if not rMe:IsAlive() then
