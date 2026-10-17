@@ -4,6 +4,7 @@ local C = require("Define.Constants")
 local Log = require("Tool.Log")
 local Class = require("Tool.Class")
 local ActionLogicMgr = require("Action.ActionLogic.ActionLogicMgr")
+local ActionCallBack = require("Action.ActionCallBack")
 
 ---@class ActionDelegator
 local ActionDelegator = Class("ActionDelegator")
@@ -63,7 +64,7 @@ function ActionDelegator:RegisterChargeActionForSkill(rActor, nAction, nContinua
     rActionParam:Reset()
     rActionParam:SetActor(rActor)
     rActionParam:SetContinuance(nContinuance)
-    rActionParam:SetCallBackFunctor(nil)
+    rActionParam:SetCallBackFunctor(ActionCallBack.new())
     rActor:SetActionLogic(ActionLogicMgr.GetInstance():GetLogicById(C.ACTION_LOGIC_TYPE.CHARGE))
     rActor:AddLogicCount()
     self:BroadcastUnitStartChargeAction(rActor,nAction, nContinuance)
@@ -95,7 +96,7 @@ local rActionParam = rActor:GetActionParam()
         nInterval = 2000
     end
     rActionParam:SetInterval(nInterval)
-    rActionParam:SetCallBackFunctor(nil)
+    rActionParam:SetCallBackFunctor(ActionCallBack.new())
     rActor:SetActionLogic(ActionLogicMgr.GetInstance():GetLogicById(C.ACTION_LOGIC_TYPE.CHANNEL))
     rActor:AddLogicCount()
     self:BroadcastUnitStartChannelAction(rActor,nAction, nContinuance)
@@ -112,8 +113,8 @@ end
 ---@param rActor ObjCharacter
 function ActionDelegator:OnHeartBeat(rActor, deltaTime)
     local bRet = false
-    local pActionLogic = rActor.GetActionLogic()
-    local rActionParam = rActor.GetActionParam()
+    local pActionLogic = rActor:GetActionLogic()
+    local rActionParam = rActor:GetActionParam()
     if not pActionLogic then
         return bRet
     end
@@ -142,15 +143,15 @@ function ActionDelegator:CurrentActionFinished(rActor)
 end
 
 function ActionDelegator:InterruptCurrentAction(rActor)
-    local actionLogic = rActor.GetActionLogic()
-    local rActionParam = rActor.GetActionParam()
+    local actionLogic = rActor:GetActionLogic()
+    local rActionParam = rActor:GetActionParam()
     if actionLogic then
         actionLogic:OnInterrupt(rActionParam)
     end
-    if(rActor:GetCharacterLogic()==C.CHARACTER_LOGIC.USE_SKILL) then
+    if(rActor:GetCharacterLogic() == C.CHARACTER_LOGIC.USE_SKILL) then
         rActor:StopCharacterLogic(true)
     end
-    self:ResetForNextAction()
+    self:ResetForNextAction(rActor)
 end
 
 function ActionDelegator:ResetForNextAction(rActor)

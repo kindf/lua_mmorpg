@@ -11,11 +11,11 @@ end
 function ChannelActionLogic:HeartBeat(actionParam, deltaTime)
     local pCallBack = actionParam:GetCallBackFunctor()
 
-    if pCallBack==nil then
+    if pCallBack == nil then
         return false
     end
 
-    if(false==pCallBack:CanDoThisActionInThisStatus(actionParam)) then
+    if(false == pCallBack:CanDoThisActionInThisStatus(actionParam)) then
         return false
     end
 
