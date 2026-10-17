@@ -3,6 +3,7 @@
 local C = require("Define.Constants")
 local Log = require("Tool.Log")
 local Class = require("Tool.Class")
+local ActionLogicMgr = require("Action.ActionLogic.ActionLogicMgr")
 
 ---@class ActionDelegator
 local ActionDelegator = Class("ActionDelegator")
@@ -29,20 +30,30 @@ function ActionDelegator:CanDoNextAction(character)
 end
 
 -- 注册瞬发技能action
-function ActionDelegator:RegisterInstantActionForSkill(rMe, skillID, maxTime, on_done)
-    Log.fn("ActionDelegator::RegisterInstantActionForSkill", string.format("%s skill=%s", rMe.name, skillID))
-    self._actions[rMe:GetID()] = {
-        kind = "instant",
-        skill_id = skillID,
-        end_time = maxTime + self._now,
-        on_done = on_done
-    }
-    Log.back(true)
+---@param rActor ObjCharacter
+function ActionDelegator:RegisterInstantActionForSkill(rActor, nAction, nActionTime)
+    local rActionParam = rActor:GetActionParam()
+    if self:CanDoNextAction(rActor) == false then
+        return false
+    end
+    rActionParam:Reset()
+    rActionParam:SetActor(rActor)
+    rActor:SetActionLogic(ActionLogicMgr.GetInstance():GetLogicById(C.ACTION_LOGIC_TYPE.INSTANCE))
+    rActor:AddLogicCount()
+    self:BroadcastUnitStartInstantAction(rActor, nAction, nActionTime)
+    if 0 == rActor:GetActionTime() then
+        rActor:SetActionTime(C.MIN_ACTION_TIME)
+    end
+    rActor:OnActionStarted()
     return true
 end
 
+-- 广播动作
+function ActionDelegator:BroadcastUnitStartInstantAction(rActor, nAction, nActionTime)
+end
+
 -- 注册蓄力技能action
-function ActionDelegator:RegisterChargeActionForSkill(rMe, skillID, maxTime, on_done)
+function ActionDelegator:__RegisterChargeActionForSkill(rMe, skillID, maxTime, on_done)
     Log.fn("ActionDelegator::RegisterChargeActionForSkill", string.format("%s skill=%s", rMe.name, skillID))
     self._actions[rMe:GetID()] = {
         kind = "charge",
@@ -54,22 +65,60 @@ function ActionDelegator:RegisterChargeActionForSkill(rMe, skillID, maxTime, on_
     return true
 end
 
---- 注册持续施法技能action
-function ActionDelegator:RegisterChannelActionForSkill(rMe, skillID, maxTime, interval, on_tick)
-    Log.fn("ActionDelegator::RegisterChannelActionForSkill", string.format("%s skill=%s", rMe.name, skillID))
-    if interval < 500 then
-        interval = 2000
+---@param rActor ObjCharacter
+function ActionDelegator:RegisterChargeActionForSkill(rActor, nAction, nContinuance)
+    local rActionParam = rActor:GetActionParam()
+    if false == self:CanDoNextAction(rActor) then
+        return false
     end
-    self._actions[rMe:GetID()] = {
-        kind = "channel",
-        skill_id = skillID,
-        end_time = maxTime + self._now,
-        interval = interval,
-        next_tick = self._now + interval,
-        on_tick = on_tick
-    }
-    Log.back(true)
+
+    rActionParam:Reset()
+    rActionParam:SetActor(rActor)
+    rActionParam:SetContinuance(nContinuance)
+    rActionParam:SetCallBackFunctor(nil)
+    rActor:SetActionLogic(ActionLogicMgr.GetInstance():GetLogicById(C.ACTION_LOGIC_TYPE.CHARGE))
+    rActor:AddLogicCount()
+    self:BroadcastUnitStartChargeAction(rActor,nAction, nContinuance)
+    if 0 == rActor:GetActionTime() then
+        rActor:SetActionTime(C.MIN_ACTION_TIME)
+    end
+    rActor:OnActionStarted()
     return true
+end
+
+function ActionDelegator:BroadcastUnitStartChargeAction(rActor, nAction, nActionTime)
+end
+
+--- 注册持续施法技能action
+---@param rActor ObjCharacter
+function ActionDelegator:RegisterChannelActionForSkill(rActor, nAction, nContinuance, nInterval)
+local rActionParam = rActor:GetActionParam()
+    if false == self:CanDoNextAction(rActor) then
+        return false
+    end
+
+    rActionParam:Reset()
+    rActionParam:SetActor(rActor)
+    if 500 > nContinuance then
+        nContinuance = 2000
+    end
+    rActionParam:SetContinuance(nContinuance)
+    if 500 > nInterval then
+        nInterval = 2000
+    end
+    rActionParam:SetInterval(nInterval)
+    rActionParam:SetCallBackFunctor(nil)
+    rActor:SetActionLogic(ActionLogicMgr.GetInstance():GetLogicById(C.ACTION_LOGIC_TYPE.CHANNEL))
+    rActor:AddLogicCount()
+    self:BroadcastUnitStartChannelAction(rActor,nAction, nContinuance)
+    if 0 == rActor:GetActionTime() then
+        rActor:SetActionTime(C.MIN_ACTION_TIME)
+    end
+    rActor:OnActionStarted()
+    return true
+end
+
+function ActionDelegator:BroadcastUnitStartChannelAction(rActor, nAction, nActionTime)
 end
 
 function ActionDelegator:Tick(uTime)
@@ -91,6 +140,60 @@ function ActionDelegator:Tick(uTime)
             end
         end
     end
+end
+
+---@param rActor ObjCharacter
+function ActionDelegator:OnHeartBeat(rActor, deltaTime)
+    local bRet = false
+    local pActionLogic = rActor.GetActionLogic()
+    local rActionParam = rActor.GetActionParam()
+    if not pActionLogic then
+        return bRet
+    end
+    if rActor:IsAlive() == false or rActor:IsActiveObj() == false then
+        return bRet
+    end
+    bRet = pActionLogic:HeartBeat(rActionParam, deltaTime)
+    if bRet == false then
+        self:InterruptCurrentAction(rActor)
+    else
+        if rActionParam:GetContinuance() <= 0 then
+            self:CurrentActionFinished(rActor)
+        end
+    end
+    return true
+end
+
+function ActionDelegator:CurrentActionFinished(rActor)
+    local bRet = false
+    local pActionLogic = rActor:GetActionLogic()
+    local ActionParam = rActor:GetActionParam()
+    if rActor:GetCharacterLogic() == C.CHARACTER_LOGIC.USE_SKILL then
+        rActor:StopCharacterLogic(false)
+    end
+    self:ResetForNextAction(rActor)
+end
+
+function ActionDelegator:InterruptCurrentAction(rActor)
+    local actionLogic = rActor.GetActionLogic()
+    local rActionParams = rActor.GetActionParams()
+    if actionLogic then
+        actionLogic:OnInterrupt(rActionParams)
+    end
+    if(rActor:GetCharacterLogic()==C.CHARACTER_LOGIC.USE_SKILL) then
+        rActor:StopCharacterLogic(true)
+    end
+    rActor:ResetForNextAction()
+end
+
+function ActionDelegator:ResetForNextAction(rActor)
+    local rActionParam = rActor:GetActionParam()
+    local pCallBack = rActionParam:GetCallBackFunctor()
+    if pCallBack then
+        pCallBack:ResetForNextAction(rActionParam)
+    end
+    rActionParam:Reset()
+    rActionParam:SetActionLogic(nil)
 end
 
 ---@type ActionDelegator

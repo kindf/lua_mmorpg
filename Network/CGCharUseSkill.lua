@@ -1,6 +1,5 @@
-local C = require("Tool.Constants")
+local C = require("Define.Constants")
 local Log = require("Tool.Log")
-local Data = require("Config.GameData")
 local Protocol = require("Network.Protocol")
 local Class = require("Tool.Class")
 

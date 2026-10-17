@@ -1,6 +1,5 @@
 local C = require("Define.Constants")
 local Log = require("Tool.Log")
-local Data = require("Config.GameData")
 local ActionDelegator = require("Action.ActionDelegator")
 local Class = require("Tool.Class")
 local SkillLogicMgr = require("Skill.SkillLogic.SkillLogicMgr")

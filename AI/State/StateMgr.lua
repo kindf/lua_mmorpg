@@ -1,5 +1,5 @@
 local Class = require("Tool.Class")
-local C = require("Tool.Constants")
+local C = require("Define.Constants")
 local IdleState = require("AI.State.IdleState")
 local CombatState = require("AI.State.CombatState")
 local DeadState = require("AI.State.DeadState")

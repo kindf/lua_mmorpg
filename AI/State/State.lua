@@ -1,4 +1,3 @@
-local State = require("AI.State.State")
 local Class = require("Tool.Class")
 local Log = require("Tool.Log")
 local C = require("Define.Constants")

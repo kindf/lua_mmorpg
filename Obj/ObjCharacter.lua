@@ -11,6 +11,7 @@ local MoveParam = require("Obj.ObjParam.MoveParam")
 local SkillParam = require("Obj.ObjParam.SkillParam")
 local SkillHelper = require("Skill.SkillHelper")
 local Protocol = require("Network.Protocol")
+local ActionParam = require("Obj.ObjParam.ActionParam")
 local SS = Protocol.SMSG
 
 ---@class ObjCharacter
@@ -53,6 +54,9 @@ function ObjCharacter:_init(cfg)
 
     self.skill_info = SkillParam.new()
     self.params = TargetAndDepletingParams.new()
+
+    self.actionParam = ActionParam.new()
+    self.actionLogic = nil
 
     ----------------------------------------------------------------------------
     -- 以下为移动 / 空间 / AOI 相关字段
@@ -99,7 +103,10 @@ function ObjCharacter:IsAlive() return self.alive end
 function ObjCharacter:IsDie() return not self.alive end
 function ObjCharacter:IsActiveObj() return self.is_active end
 function ObjCharacter:GetCampID() return self.camp_id end
-function ObjCharacter:GetCampData() return {m_nCampID = self.camp_id} end
+function ObjCharacter:GetCampData() return end
+function ObjCharacter:GetActionParam() return self.actionParam end
+function ObjCharacter:GetActionLogic() return self.actionLogic end
+function ObjCharacter:SetActionLogic(logic) self.actionLogic = logic end
 
 function ObjCharacter:IsEnemy(tar)
     if tar == nil then
@@ -205,6 +212,7 @@ end
 function ObjCharacter:IsCharacterLogicStopped() return self.logic_stopped end
 function ObjCharacter:StopCharacterLogic(bAbortive)
     self.logic_stopped = true
+    self:OnCharacterLogicStopped(bAbortive)
 end
 
 function ObjCharacter:AddLogicCount()
@@ -540,6 +548,12 @@ end
 
 function ObjCharacter:Obj_Logic_Idle(uTime) return true end
 
+function ObjCharacter:Obj_Logic_UseSkill(uTime)
+    if self:IsDie() then return false end
+    local deltaTime = self:GetLogicTime()
+    return ActionDelegator.GetInstance():OnHeartBeat(self, deltaTime)
+end
+
 function ObjCharacter:HeartBeat(uTime)
     self:UpdateTime(uTime)
     self:UpdateZone()
@@ -558,6 +572,11 @@ function ObjCharacter:HeartBeat(uTime)
             self:Obj_Logic_Idle(uTime)
         elseif logic == C.CHARACTER_LOGIC.MOVE then
             ok = self:Obj_Logic_Move(uTime)
+        elseif logic == C.CHARACTER_LOGIC.USE_SKILL then
+            -- 技能逻辑由 SkillCore::ProcessSkillRequest() 里注册的回调驱动
+            self:Obj_Logic_UseSkill(uTime)
+        else
+            Log.error(string.format("ObjCharacter::HeartBeat 未知逻辑 %d", logic))
         end
         if not ok then
             self:StopCharacterLogic(true)
@@ -568,6 +587,24 @@ function ObjCharacter:HeartBeat(uTime)
         self.ai:Logic(uTime)
     end
     return true
+end
+
+function ObjCharacter:OnCharacterLogicStopped(bAbortive)
+
+	local eLogic = self:GetCharacterLogic()
+    if eLogic == C.CHARACTER_LOGIC.MOVE then
+        if bAbortive then
+            -- TODO: 广播
+        end
+    elseif eLogic == C.CHARACTER_LOGIC.USE_SKILL then
+        if bAbortive then
+            -- TODO: 广播
+        end
+    end
+end
+
+function ObjCharacter:OnActionStarted()
+    Log.msg("ObjCharacter::OnActionStarted")
 end
 
 function ObjCharacter:getScene() return self.scene end

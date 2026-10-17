@@ -228,7 +228,7 @@ function Scene:ObjZone_Changed(pObj, idNew, idOld)   return AOI.ObjZone_Changed(
 --------------------------------------------------------------------------------
 function Scene:IsCanEnter()
     if self:GetSceneStatus() ~= C.SCENE_STATUS.RUNNING then
-        Log.err(string.format("场景 %d 尚未就绪，不能进入", self.m_SceneID))
+        Log.error(string.format("场景 %d 尚未就绪，不能进入", self.m_SceneID))
         return false
     end
     return true
@@ -245,7 +245,7 @@ function Scene:CheckEnter(teamID)
             return -1
         end
         if self.m_CopyTeamID ~= nil and self.m_CopyTeamID ~= teamID then
-            Log.err(string.format("CheckEnter: 队伍 %s 无权进入副本 %d", tostring(teamID), self.m_SceneID))
+            Log.error(string.format("CheckEnter: 队伍 %s 无权进入副本 %d", tostring(teamID), self.m_SceneID))
             return -1
         end
     end

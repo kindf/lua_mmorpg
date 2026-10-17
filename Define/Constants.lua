@@ -142,5 +142,14 @@ C.PATH_IMPASSABLE = 1
 C.PATH_OPEN       = 20
 C.PATH_CLOSED     = 30
 
+C.ACTION_LOGIC_TYPE = {
+    INVALID = 0,
+    INSTANCE = 1, -- 瞬发
+    CHANNEL = 2, -- 持续施法
+    CHARGE = 3, -- 蓄力
+}
+
+C.MIN_ACTION_TIME = 500
+
 return C
 

@@ -1,5 +1,5 @@
 
-local Class = require("Class")
+local Class = require("Tool.Class")
 
 ---@class Vec
 local Vec = Class("Vec")

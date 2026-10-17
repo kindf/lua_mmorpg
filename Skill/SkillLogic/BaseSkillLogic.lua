@@ -4,7 +4,7 @@ local SkillCondDeplete = require("Skill.SkillCondDeplete.SkillCondDeplete")
 local Log = require("Tool.Log")
 local ActionDelegator = require("Action.ActionDelegator")
 local Combat = require("Skill.CombatCore")
-local Targeting = require("Skill.Targeting")
+local Targeting = require("Skill.SkillLogic.Targeting")
 
 local function GetTargetObj(rMe)
     local param = rMe:GetTargetAndDepletingParams()
@@ -217,9 +217,7 @@ function BaseSkillLogic:StartCharging(rMe)
     if nMaxTime <= 0 then
         bRet = self:Action_ActivateOnceHandler(rMe)
     else
-        bRet = ActionDelegator.GetInstance():RegisterChargeActionForSkill(rMe, si.skill_id, nMaxTime, function()
-            return self:Action_ActivateOnceHandler(rMe)
-        end)
+        bRet = ActionDelegator.GetInstance():RegisterChargeActionForSkill(rMe, si.skill_id, nMaxTime)
     end
     if bRet then
         params:SetErrCode(C.OR_OK)
@@ -246,9 +244,7 @@ function BaseSkillLogic:StartChanneling(rMe)
     end
     if bRet then
         rMe:OnUseSkillSuccessfully(si)
-        local ok = ActionDelegator.GetInstance():RegisterChannelActionForSkill(rMe, si.skill_id, nMaxTime, si.charges_or_interval, function()
-            self:Action_ActivateEachTickHandler(rMe)
-        end)
+        local ok = ActionDelegator.GetInstance():RegisterChannelActionForSkill(rMe, si.skill_id, nMaxTime, si.charges_or_interval)
         if ok then
             self:CooldownProcess(rMe)
             params:SetErrCode(C.OR_OK)

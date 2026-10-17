@@ -73,7 +73,7 @@ end
 function AOI.ObjZone_Unregister(scene, pObj, idZone)
     if pObj == nil then return false end
     if idZone < 0 or idZone >= scene.m_ZoneInfo.m_wZoneSize then
-        Log.err(string.format("ObjZone_Unregister: 非法 zone %d", idZone))
+        Log.error(string.format("ObjZone_Unregister: 非法 zone %d", idZone))
         return false
     end
 
@@ -128,7 +128,7 @@ function AOI.ObjZone_Changed(scene, pObj, idNew, idOld)
 
         local pPacket = pObj:CreateDeleteObjPacket()
         if pPacket == nil then
-            Log.err("ObjZone_Changed: CreateDeleteObjPacket 返回 nil")
+            Log.error("ObjZone_Changed: CreateDeleteObjPacket 返回 nil")
             return false
         end
 
@@ -167,11 +167,11 @@ function AOI.ObjZone_Changed(scene, pObj, idNew, idOld)
     -- 新格：进入
     ----------------------------------------------------------------
     if idNew < 0 or idNew >= zoneSize then
-        Log.err(string.format("ObjZone_Changed: 非法新 zone %d", idNew))
+        Log.error(string.format("ObjZone_Changed: 非法新 zone %d", idNew))
     else
         local pPacket = pObj:CreateNewObjPacket()
         if pPacket == nil then
-            Log.err("ObjZone_Changed: CreateNewObjPacket 返回 nil")
+            Log.error("ObjZone_Changed: CreateNewObjPacket 返回 nil")
             return false
         end
 
