@@ -17,6 +17,12 @@ function ActionDelegator:Now()
     return self._now
 end
 
+-- 由主循环每帧调用，推进动作系统的绝对时间
+-- （技能冷却 SetCooldown / GetActionTime 都依赖它）
+function ActionDelegator:UpdateTime(uTime)
+    self._now = uTime
+end
+
 ---@param rActor ObjCharacter
 function ActionDelegator:CanDoNextAction(rActor)
     local actionLogic = rActor:GetActionLogic()

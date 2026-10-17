@@ -108,3 +108,5 @@ end
 
 function State:StateLogic(pAi, uTime)
 end
+
+return State

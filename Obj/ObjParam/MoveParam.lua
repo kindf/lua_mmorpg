@@ -30,3 +30,5 @@ function MoveParam:NextTargetPos()
     end
     return self.m_wCurNode < self.m_wNumNode
 end
+
+return MoveParam
